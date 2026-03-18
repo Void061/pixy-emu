@@ -22,7 +22,9 @@ model User {
   ownedFurniture  FurnitureItem[]  @relation("FurnitureOwner")
   placedFurniture FurnitureItem[]  @relation("FurniturePlacer")
   roomRights      RoomRights[]
+  roomBans        RoomBan[]
   chatMessages    ChatMessage[]
+  roomVotes       RoomVote[]
 
   @@map("users")
 }
@@ -97,16 +99,38 @@ model Room {
 
   theme Json @default("{}")
 
+  // Access control
+  accessMode String @default("open") @map("access_mode") // "open" | "doorbell" | "password"
+  password   String? // hashed, only set when accessMode = "password"
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  owner     User            @relation(fields: [ownerId], references: [id])
+  owner        User            @relation(fields: [ownerId], references: [id])
   rights       RoomRights[]
+  bans         RoomBan[]
   furniture    FurnitureItem[]
   chatMessages ChatMessage[]
+  votes        RoomVote[]
 
   @@index([ownerId])
   @@map("rooms")
+}
+
+// ─── Room Votes ────────────────────────────────────────────────────
+
+model RoomVote {
+  id     String @id @default(uuid())
+  roomId String @map("room_id")
+  userId String @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@map("room_votes")
 }
 
 // ─── Room Rights ───────────────────────────────────────────────────
@@ -139,4 +163,19 @@ model ChatMessage {
 
   @@index([roomId, createdAt])
   @@map("chat_messages")
+}
+
+// ─── Room Bans ─────────────────────────────────────────────────────
+
+model RoomBan {
+  id       String   @id @default(uuid())
+  roomId   String   @map("room_id")
+  userId   String   @map("user_id")
+  bannedAt DateTime @default(now()) @map("banned_at")
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@map("room_bans")
 }

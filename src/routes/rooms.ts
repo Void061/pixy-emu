@@ -2,7 +2,20 @@ import { getErrorMessage } from "../utils/errors.js";
 import { Router } from "express";
 import { matchMaker } from "@colyseus/core";
 import { authMiddleware } from "../middleware/auth.js";
-import { RoomService, PermissionService } from "../services/index.js";
+import { BanService } from "../services/BanService.js";
+import {
+  listRooms,
+  listUserRooms,
+  getRoomDetail,
+  createRoom,
+  updateRoom,
+  deleteRoom,
+  grantRights,
+  revokeRights,
+  voteRoom,
+  hasVoted,
+  verifyRoomPassword,
+} from "../actions/index.js";
 
 const router = Router();
 
@@ -15,13 +28,15 @@ router.get("/live", async (_req, res) => {
     const colyseusRooms = await matchMaker.query({ name: "game_room" });
     const counts: Record<string, { clients: number; maxClients: number }> = {};
     for (const r of colyseusRooms) {
-      const dbId = r.metadata?.roomId;
+      const dbId = r.metadata?.dbRoomId;
       if (dbId) {
-        // Multiple Colyseus rooms can map to same roomId — sum clients
+        // Use playerCount from metadata (actual joined players) instead of
+        // r.clients (WebSocket connections, which includes clients still in onAuth)
+        const playerCount: number = r.metadata?.playerCount ?? r.clients;
         if (counts[dbId]) {
-          counts[dbId].clients += r.clients;
+          counts[dbId].clients += playerCount;
         } else {
-          counts[dbId] = { clients: r.clients, maxClients: r.maxClients };
+          counts[dbId] = { clients: playerCount, maxClients: r.maxClients };
         }
       }
     }
@@ -34,7 +49,7 @@ router.get("/live", async (_req, res) => {
 /** List all rooms. */
 router.get("/", async (_req, res) => {
   try {
-    const rooms = await RoomService.listRooms();
+    const rooms = await listRooms();
     res.json(rooms);
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
@@ -44,7 +59,7 @@ router.get("/", async (_req, res) => {
 /** List rooms owned by the current user. */
 router.get("/mine", async (req, res) => {
   try {
-    const rooms = await RoomService.listUserRooms(req.userId!);
+    const rooms = await listUserRooms(req.userId!);
     res.json(rooms);
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
@@ -54,7 +69,7 @@ router.get("/mine", async (req, res) => {
 /** Get room detail (including rights). */
 router.get("/:roomId", async (req, res) => {
   try {
-    const room = await RoomService.getRoomDetail(req.params.roomId);
+    const room = await getRoomDetail(req.params.roomId);
     res.json(room);
   } catch (err: unknown) {
     res.status(404).json({ error: getErrorMessage(err) });
@@ -87,7 +102,7 @@ router.post("/", async (req, res) => {
       return;
     }
 
-    const room = await RoomService.createRoom({
+    const room = await createRoom({
       ownerId: req.userId!,
       name: trimmedName,
       description: typeof description === "string" ? description.slice(0, 200) : undefined,
@@ -109,7 +124,7 @@ router.post("/", async (req, res) => {
 /** Update a room (owner only). */
 router.patch("/:roomId", async (req, res) => {
   try {
-    const room = await RoomService.updateRoom(req.params.roomId, req.userId!, req.body);
+    const room = await updateRoom(req.params.roomId, req.userId!, req.body);
     res.json(room);
   } catch (err: unknown) {
     res.status(403).json({ error: getErrorMessage(err) });
@@ -119,7 +134,7 @@ router.patch("/:roomId", async (req, res) => {
 /** Delete a room (owner only). */
 router.delete("/:roomId", async (req, res) => {
   try {
-    await RoomService.deleteRoom(req.params.roomId, req.userId!);
+    await deleteRoom(req.params.roomId, req.userId!);
     res.status(204).send();
   } catch (err: unknown) {
     res.status(403).json({ error: getErrorMessage(err) });
@@ -129,7 +144,7 @@ router.delete("/:roomId", async (req, res) => {
 /** Grant rights to a user. */
 router.post("/:roomId/rights/:targetUserId", async (req, res) => {
   try {
-    await PermissionService.grantRights(req.params.roomId, req.params.targetUserId, req.userId!);
+    await grantRights(req.params.roomId, req.params.targetUserId, req.userId!);
     res.json({ success: true });
   } catch (err: unknown) {
     res.status(403).json({ error: getErrorMessage(err) });
@@ -139,10 +154,91 @@ router.post("/:roomId/rights/:targetUserId", async (req, res) => {
 /** Revoke rights from a user (auto-removes their furniture). */
 router.delete("/:roomId/rights/:targetUserId", async (req, res) => {
   try {
-    const result = await PermissionService.revokeRights(req.params.roomId, req.params.targetUserId, req.userId!);
+    const result = await revokeRights(req.params.roomId, req.params.targetUserId, req.userId!);
     res.json(result);
   } catch (err: unknown) {
     res.status(403).json({ error: getErrorMessage(err) });
+  }
+});
+
+/** Ban a user from a room. */
+router.post("/:roomId/bans/:targetUserId", async (req, res) => {
+  try {
+    await BanService.banPlayer(req.params.roomId, req.params.targetUserId, req.userId!);
+    res.json({ success: true });
+  } catch (err: unknown) {
+    res.status(403).json({ error: getErrorMessage(err) });
+  }
+});
+
+/** Unban a user from a room (owner only). */
+router.delete("/:roomId/bans/:targetUserId", async (req, res) => {
+  try {
+    await BanService.unbanPlayer(req.params.roomId, req.params.targetUserId, req.userId!);
+    res.json({ success: true });
+  } catch (err: unknown) {
+    res.status(403).json({ error: getErrorMessage(err) });
+  }
+});
+
+/** List banned users in a room (owner only). */
+router.get("/:roomId/bans", async (req, res) => {
+  try {
+    const bannedUsers = await BanService.getRoomBannedUsers(req.params.roomId);
+    res.json(bannedUsers);
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
+  }
+});
+
+/** Check if the current user is banned from a room. */
+router.get("/:roomId/bans/check", async (req, res) => {
+  try {
+    const banned = await BanService.isBanned(req.params.roomId, req.userId!);
+    res.json({ banned });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
+  }
+});
+
+/** Vote for a room. */
+router.post("/:roomId/vote", async (req, res) => {
+  try {
+    const result = await voteRoom(req.params.roomId, req.userId!);
+    res.json(result);
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    const status = msg.includes("Non puoi votare") ? 403 : 500;
+    res.status(status).json({ error: msg });
+  }
+});
+
+/** Check if the current user has voted for a room. */
+router.get("/:roomId/vote", async (req, res) => {
+  try {
+    const voted = await hasVoted(req.params.roomId, req.userId!);
+    res.json({ voted });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
+  }
+});
+
+/** Verify room password (for password-locked rooms). */
+router.post("/:roomId/verify-password", async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || typeof password !== "string") {
+      res.status(400).json({ error: "password is required" });
+      return;
+    }
+    const valid = await verifyRoomPassword(req.params.roomId, password);
+    if (!valid) {
+      res.status(403).json({ error: "Password errata" });
+      return;
+    }
+    res.json({ success: true });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 

@@ -12,7 +12,6 @@ import express from "express";
 /**
  * Import Room handlers
  */
-import { MyRoom } from "./rooms/MyRoom.js";
 import { GameRoom } from "./rooms/GameRoom.js";
 import { SessionRoom } from "./rooms/SessionRoom.js";
 
@@ -29,8 +28,7 @@ const server = defineServer({
     transport: new WebSocketTransport(),
 
     rooms: {
-        my_room: defineRoom(MyRoom),
-        game_room: defineRoom(GameRoom).filterBy(["roomId"]),
+        game_room: defineRoom(GameRoom).filterBy(["dbRoomId"]),
         session: defineRoom(SessionRoom),
     },
 

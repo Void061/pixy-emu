@@ -1,6 +1,7 @@
 import prisma from "../config/prisma.js";
 import { FurnitureConverter } from "../converters/index.js";
 import type { FurnitureItemModel, FurnitureRotation } from "../models/index.js";
+import { validatePosition } from "../utils/validation.js";
 
 export interface PlaceFurnitureInput {
   furnitureItemId: string;
@@ -57,14 +58,7 @@ export class InventoryService {
       throw new Error("You don't have permission to place furniture in this room");
     }
 
-    // Validazione posizione
-    const roomData = await prisma.room.findUniqueOrThrow({ where: { id: input.roomId } });
-    if (
-      input.positionX < 0 || input.positionY < 0 ||
-      input.positionX >= roomData.width || input.positionY >= roomData.height
-    ) {
-      throw new Error("Invalid position: cannot place furniture outside room bounds");
-    }
+    validatePosition(input.positionX, input.positionY, room.width, room.height);
 
     const updated = await prisma.furnitureItem.update({
       where: { id: input.furnitureItemId },
@@ -228,14 +222,7 @@ export class InventoryService {
       throw new Error("You don't have permission to modify furniture in this room");
     }
 
-    // Validazione posizione
-    const roomData = await prisma.room.findUniqueOrThrow({ where: { id: item.roomId } });
-    if (
-      positionX < 0 || positionY < 0 ||
-      positionX >= roomData.width || positionY >= roomData.height
-    ) {
-      throw new Error("Invalid position: cannot move furniture outside room bounds");
-    }
+    validatePosition(positionX, positionY, room.width, room.height);
 
     const updated = await prisma.furnitureItem.update({
       where: { id: furnitureItemId },

@@ -5,6 +5,8 @@ export interface RoomTheme {
   wallDark: string;
 }
 
+export type RoomAccessMode = 'open' | 'doorbell' | 'password';
+
 export class RoomModel {
   constructor(
     public readonly id: string,
@@ -22,7 +24,14 @@ export class RoomModel {
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly ownerUsername: string = "",
+    public readonly accessMode: RoomAccessMode = "open",
+    public readonly score: number = 0,
   ) {}
+}
+
+export interface RightsUser {
+  userId: string;
+  username: string;
 }
 
 /** Room enriched with rights user IDs — used for full room loads. */
@@ -43,12 +52,16 @@ export class RoomDetailModel extends RoomModel {
     createdAt: Date,
     updatedAt: Date,
     public readonly rightsUserIds: string[],
+    public readonly rightsUsers: RightsUser[],
     ownerUsername: string = "",
+    accessMode: RoomAccessMode = "open",
+    score: number = 0,
   ) {
     super(
       id, ownerId, name, description, maxUsers,
       width, height, doorTileX, doorTileY,
       entranceTileX, entranceTileY, theme, createdAt, updatedAt, ownerUsername,
+      accessMode, score,
     );
   }
 }

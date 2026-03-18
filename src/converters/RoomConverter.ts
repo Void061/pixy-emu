@@ -1,12 +1,13 @@
 import type { Room as PrismaRoom } from "../generated/prisma/client.js";
-import { RoomModel, RoomDetailModel, type RoomTheme } from "../models/index.js";
+import { RoomModel, RoomDetailModel, type RoomTheme, type RoomAccessMode } from "../models/index.js";
 
 interface PrismaRoomWithOwner extends PrismaRoom {
   owner?: { username: string };
+  _count?: { votes: number };
 }
 
 interface PrismaRoomWithRights extends PrismaRoomWithOwner {
-  rights: { userId: string }[];
+  rights: { userId: string; user: { username: string } }[];
 }
 
 export class RoomConverter {
@@ -27,6 +28,8 @@ export class RoomConverter {
       p.createdAt,
       p.updatedAt,
       p.owner?.username ?? "",
+      p.accessMode as RoomAccessMode,
+      p._count?.votes ?? 0,
     );
   }
 
@@ -47,7 +50,10 @@ export class RoomConverter {
       p.createdAt,
       p.updatedAt,
       p.rights.map((r) => r.userId),
+      p.rights.map((r) => ({ userId: r.userId, username: r.user.username })),
       p.owner?.username ?? "",
+      p.accessMode as RoomAccessMode,
+      p._count?.votes ?? 0,
     );
   }
 }

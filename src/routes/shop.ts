@@ -1,14 +1,19 @@
 import { getErrorMessage } from "../utils/errors.js";
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.js";
-import { ShopService } from "../services/index.js";
+import {
+  getCatalogByCategory,
+  getBalance,
+  purchaseItem,
+  setBalance,
+} from "../actions/index.js";
 
 const router = Router();
 
 /** Get catalog grouped by category (public). */
 router.get("/catalog", async (_req, res) => {
   try {
-    const categories = await ShopService.getCatalogByCategory();
+    const categories = await getCatalogByCategory();
     res.json(categories);
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
@@ -18,7 +23,7 @@ router.get("/catalog", async (_req, res) => {
 /** Get user's pixies balance. */
 router.get("/balance", authMiddleware, async (req, res) => {
   try {
-    const pixies = await ShopService.getBalance(req.userId!);
+    const pixies = await getBalance(req.userId!);
     res.json({ pixies });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
@@ -33,7 +38,7 @@ router.post("/purchase", authMiddleware, async (req, res) => {
       res.status(400).json({ error: "definitionId is required" });
       return;
     }
-    const result = await ShopService.purchaseItem(req.userId!, definitionId);
+    const result = await purchaseItem(req.userId!, definitionId);
     res.json(result);
   } catch (err: unknown) {
     const msg = getErrorMessage(err);
@@ -50,7 +55,7 @@ router.post("/set-balance", authMiddleware, async (req, res) => {
       res.status(400).json({ error: "amount must be a non-negative number" });
       return;
     }
-    const pixies = await ShopService.setBalance(req.userId!, amount);
+    const pixies = await setBalance(req.userId!, amount);
     res.json({ pixies });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
