@@ -26,6 +26,12 @@ model User {
   chatMessages    ChatMessage[]
   roomVotes       RoomVote[]
 
+  sentFriendRequests     Friendship[] @relation("FriendshipSender")
+  receivedFriendRequests Friendship[] @relation("FriendshipReceiver")
+
+  sentPrivateMessages     PrivateMessage[] @relation("PrivateMessageSender")
+  receivedPrivateMessages PrivateMessage[] @relation("PrivateMessageReceiver")
+
   @@map("users")
 }
 
@@ -103,6 +109,9 @@ model Room {
   accessMode String @default("open") @map("access_mode") // "open" | "doorbell" | "password"
   password   String? // hashed, only set when accessMode = "password"
 
+  // Structure settings
+  disableTileBlocking Boolean @default(false) @map("disable_tile_blocking")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -178,4 +187,39 @@ model RoomBan {
 
   @@unique([roomId, userId])
   @@map("room_bans")
+}
+
+// ─── Friendships ───────────────────────────────────────────────────
+
+model Friendship {
+  id         String   @id @default(uuid())
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  status     String   @default("pending") // "pending" | "accepted"
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  sender   User @relation("FriendshipSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("FriendshipReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId])
+  @@map("friendships")
+}
+
+// ─── Private Messages ──────────────────────────────────────────────
+
+model PrivateMessage {
+  id         String   @id @default(uuid())
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  message    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  sender   User @relation("PrivateMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("PrivateMessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId, createdAt])
+  @@index([receiverId, senderId, createdAt])
+  @@map("private_messages")
 }

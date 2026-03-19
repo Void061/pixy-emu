@@ -30,6 +30,7 @@ export class RoomConverter {
       p.owner?.username ?? "",
       p.accessMode as RoomAccessMode,
       p._count?.votes ?? 0,
+      p.disableTileBlocking,
     );
   }
 
@@ -54,6 +55,7 @@ export class RoomConverter {
       p.owner?.username ?? "",
       p.accessMode as RoomAccessMode,
       p._count?.votes ?? 0,
+      p.disableTileBlocking,
     );
   }
 }

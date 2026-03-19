@@ -23,6 +23,8 @@ import roomRoutes from "./routes/rooms.js";
 import inventoryRoutes from "./routes/inventory.js";
 import furnitureRoutes from "./routes/furniture.js";
 import shopRoutes from "./routes/shop.js";
+import friendRoutes from "./routes/friends.js";
+import privateChatRoutes from "./routes/privateChat.js";
 
 const server = defineServer({
     transport: new WebSocketTransport(),
@@ -54,6 +56,8 @@ const server = defineServer({
         app.use("/api/inventory", inventoryRoutes);
         app.use("/api/furniture", furnitureRoutes);
         app.use("/api/shop", shopRoutes);
+        app.use("/api/friends", friendRoutes);
+        app.use("/api/private-chat", privateChatRoutes);
 
         // Health check
         app.get("/api/health", (_req, res) => {

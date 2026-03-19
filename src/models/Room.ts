@@ -26,6 +26,7 @@ export class RoomModel {
     public readonly ownerUsername: string = "",
     public readonly accessMode: RoomAccessMode = "open",
     public readonly score: number = 0,
+    public readonly disableTileBlocking: boolean = false,
   ) {}
 }
 
@@ -56,12 +57,13 @@ export class RoomDetailModel extends RoomModel {
     ownerUsername: string = "",
     accessMode: RoomAccessMode = "open",
     score: number = 0,
+    public readonly disableTileBlocking: boolean = false,
   ) {
     super(
       id, ownerId, name, description, maxUsers,
       width, height, doorTileX, doorTileY,
       entranceTileX, entranceTileY, theme, createdAt, updatedAt, ownerUsername,
-      accessMode, score,
+      accessMode, score, disableTileBlocking,
     );
   }
 }

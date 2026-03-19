@@ -1,6 +1,7 @@
 import { Room, Client, CloseCode } from "colyseus";
 import { Schema } from "@colyseus/schema";
 import { AuthService } from "../services/AuthService.js";
+import { OnlineTracker } from "../services/OnlineTracker.js";
 
 class EmptyState extends Schema {}
 
@@ -49,6 +50,7 @@ export class SessionRoom extends Room<{ state: EmptyState }> {
 
     this.activeUsers.set(auth.userId, client.sessionId);
     this.sessionUsers.set(client.sessionId, auth.userId);
+    OnlineTracker.setOnline(auth.userId, auth.username);
     console.log(`Session: ${auth.username} (${auth.userId}) connected`);
   }
 
@@ -58,6 +60,7 @@ export class SessionRoom extends Room<{ state: EmptyState }> {
       // Only remove from activeUsers if this is still the active session
       if (this.activeUsers.get(userId) === client.sessionId) {
         this.activeUsers.delete(userId);
+        OnlineTracker.setOffline(userId);
       }
       this.sessionUsers.delete(client.sessionId);
       console.log(`Session: ${userId} disconnected`);

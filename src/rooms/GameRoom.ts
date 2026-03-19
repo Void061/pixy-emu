@@ -5,6 +5,7 @@ import { RoomService } from "../services/RoomService.js";
 import { InventoryService } from "../services/InventoryService.js";
 import { PermissionService } from "../services/PermissionService.js";
 import { BanService } from "../services/BanService.js";
+import { OnlineTracker } from "../services/OnlineTracker.js";
 import {
   movePlayer,
   placeFurniture,
@@ -104,6 +105,9 @@ export class GameRoom extends Room<{ state: GameRoomState }> {
       const auth = this.clientUsers.get(client.sessionId);
       if (!auth) return;
       await updateRoomSettings(client, auth, message, this.broadcast.bind(this));
+      if (message.disableTileBlocking !== undefined) {
+        this.state.disableTileBlocking = message.disableTileBlocking;
+      }
     },
   };
 
@@ -223,6 +227,7 @@ export class GameRoom extends Room<{ state: GameRoomState }> {
       this.state.roomName = room.name;
       this.state.width = room.width;
       this.state.height = room.height;
+      this.state.disableTileBlocking = room.disableTileBlocking;
 
       // Load existing furniture
       const roomFurniture = await InventoryService.getRoomFurniture(auth.dbRoomId);
@@ -270,6 +275,7 @@ export class GameRoom extends Room<{ state: GameRoomState }> {
       accessMode: room.accessMode,
       score: room.score,
       description: room.description,
+      disableTileBlocking: room.disableTileBlocking,
     };
     console.log('[GameRoom] Sending room_joined message:', JSON.stringify(roomJoinedData));
     client.send("room_joined", roomJoinedData);
@@ -277,6 +283,9 @@ export class GameRoom extends Room<{ state: GameRoomState }> {
     // Send user's inventory
     const inventory = await InventoryService.getGroupedInventory(auth.userId);
     client.send("inventory", inventory);
+
+    // Track current room for online presence
+    OnlineTracker.setCurrentRoom(auth.userId, auth.dbRoomId, room.name);
   }
 
   onLeave(client: Client, _code: CloseCode) {
@@ -285,6 +294,7 @@ export class GameRoom extends Room<{ state: GameRoomState }> {
       console.log(`${auth.username} left room ${auth.dbRoomId}`);
       this.state.players.delete(auth.userId);
       this.clientUsers.delete(client.sessionId);
+      OnlineTracker.clearCurrentRoom(auth.userId);
       // Update metadata so live endpoint reflects actual joined players
       this.setMetadata({ ...this.metadata, playerCount: this.state.players.size });
     }

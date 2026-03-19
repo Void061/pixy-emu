@@ -48,6 +48,7 @@ export interface UpdateRoomSettingsMessage {
   description?: string;
   accessMode?: 'open' | 'doorbell' | 'password';
   password?: string;
+  disableTileBlocking?: boolean;
 }
 
 // ─── Internal Auth Data ────────────────────────────────────────

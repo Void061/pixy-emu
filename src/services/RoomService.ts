@@ -24,6 +24,7 @@ export interface UpdateRoomInput {
   theme?: RoomTheme;
   accessMode?: RoomAccessMode;
   password?: string; // plain-text, will be hashed
+  disableTileBlocking?: boolean;
 }
 
 const ROOM_INCLUDE = {
@@ -102,6 +103,7 @@ export class RoomService {
     if (input.description !== undefined) data.description = input.description;
     if (input.maxUsers !== undefined) data.maxUsers = input.maxUsers;
     if (input.theme !== undefined) data.theme = input.theme as object;
+    if (input.disableTileBlocking !== undefined) data.disableTileBlocking = input.disableTileBlocking;
 
     if (input.accessMode !== undefined) {
       data.accessMode = input.accessMode;

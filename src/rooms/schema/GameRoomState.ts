@@ -24,6 +24,7 @@ export class GameRoomState extends Schema {
   @type("string") roomName: string = "";
   @type("number") width: number = 6;
   @type("number") height: number = 6;
+  @type("boolean") disableTileBlocking: boolean = false;
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
   @type({ map: FurnitureState }) furniture = new MapSchema<FurnitureState>();
 }

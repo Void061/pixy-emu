@@ -45,6 +45,7 @@ export async function updateRoomSettings(
       description: message.description,
       accessMode: message.accessMode,
       password: message.password,
+      disableTileBlocking: message.disableTileBlocking,
     });
 
     broadcast("room_settings_updated", {
@@ -52,6 +53,7 @@ export async function updateRoomSettings(
       description: updated.description,
       accessMode: updated.accessMode,
       score: updated.score,
+      disableTileBlocking: updated.disableTileBlocking,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -5,3 +5,6 @@ export { FurnitureService } from "./FurnitureService.js";
 export { PermissionService, type RoomRole } from "./PermissionService.js";
 export { BanService, type BannedUser } from "./BanService.js";
 export { ShopService, type CatalogCategory } from "./ShopService.js";
+export { FriendService, type FriendInfo, type FriendRequest, type FriendshipStatus } from "./FriendService.js";
+export { OnlineTracker, type OnlineUser } from "./OnlineTracker.js";
+export { PrivateChatService, type PrivateMessageInfo } from "./PrivateChatService.js";
