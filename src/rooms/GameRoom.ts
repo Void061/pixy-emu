@@ -240,6 +240,7 @@ export class GameRoom extends Room<{ state: GameRoomState }> {
         furniState.x = item.positionX!;
         furniState.y = item.positionY!;
         furniState.rotation = item.rotation;
+        furniState.z = item.positionZ;
         furniState.currentState = item.currentState;
         this.state.furniture.set(item.id, furniState);
       }

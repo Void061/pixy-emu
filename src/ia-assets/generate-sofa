@@ -1,0 +1,69 @@
+Generate a pixel art spritesheet of a tropical 2-seat sofa, isometric 2:1 ratio, Habbo Hotel style.
+
+================================
+OUTPUT: ONE HORIZONTAL ROW OF 4 VIEWS
+================================
+
+Place exactly 4 sofa views side by side in a single row.
+Label each one below: NE, SE, SW, NW
+
+================================
+HOW TO CREATE THE 4 VIEWS
+================================
+
+You only need to draw TWO unique views, then mirror each one:
+
+1. Draw a FRONT view (sofa facing bottom-left, cushions visible, backrest on the upper-right side)
+2. Draw a BACK view (sofa facing bottom-left, backrest facing viewer, cushions hidden behind)
+
+Then:
+- NE = front view (as drawn)
+- NW = front view flipped horizontally
+- SW = back view (as drawn)
+- SE = back view flipped horizontally
+
+All 4 must appear in a single horizontal row: [NE] [NW] [SW] [SE]
+
+================================
+FRONT VIEW (NE / SE)
+================================
+
+- The sofa is seen from the front, cushions and seat fully visible
+- Backrest is behind the seat, visible above the cushions
+- Both armrests visible on the sides
+- The sofa sits on an isometric diamond (2:1 pixel ratio)
+
+================================
+BACK VIEW (NW / SW)
+================================
+
+- The sofa is seen from behind
+- The wooden back panel of the backrest faces the viewer
+- Armrests stick out on both sides
+- Top edge of cushions peeks above the backrest
+- Legs visible underneath
+- Must look 3D with depth — NOT a flat rectangle
+
+================================
+DESIGN
+================================
+
+- Tropical resort style: bamboo/rattan frame, warm wood tones
+- Cream or beige cushions with visible seams
+- Visible armrests on both sides
+- Low backrest
+- 2-seat width
+- Clean pixel edges, no anti-aliasing
+- NO shadows under the sofa
+- NO background — transparent or white only
+
+================================
+RULES
+================================
+
+- NW is a horizontal mirror of NE
+- SE is a horizontal mirror of SW
+- Same pixel size for all 4
+- Same colors, same proportions
+- Strict 2:1 isometric pixel grid
+- No extra sprites, no extra text besides labels

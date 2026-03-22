@@ -53,6 +53,8 @@ model FurnitureDefinition {
   interactionPoints Json   @map("interaction_points") // { ne: {...}, se: {...} }
   zHeight          Int     @default(0) @map("z_height")
   spriteFormat     String  @default("png") @map("sprite_format")
+  isStackable      Boolean @default(false) @map("is_stackable")
+  stackHeight      Float   @default(0) @map("stack_height")
 
   items FurnitureItem[]
 
@@ -71,6 +73,7 @@ model FurnitureItem {
   placedByUserId String?   @map("placed_by_user_id")
   positionX      Int?      @map("position_x")
   positionY      Int?      @map("position_y")
+  positionZ      Float     @default(0) @map("position_z")
   rotation       String    @default("se")
   currentState   String    @default("default") @map("current_state")
   placedAt       DateTime? @map("placed_at")

@@ -1,7 +1,7 @@
 import prisma from "../config/prisma.js";
 import { FurnitureConverter } from "../converters/index.js";
 import type { FurnitureItemModel, FurnitureRotation } from "../models/index.js";
-import { validatePosition } from "../utils/validation.js";
+import { validateMultiTilePosition, getOccupiedTilesServer } from "../utils/validation.js";
 
 export interface PlaceFurnitureInput {
   furnitureItemId: string;
@@ -18,6 +18,80 @@ export interface PickupFurnitureInput {
 }
 
 export class InventoryService {
+  /**
+   * Calculate the positionZ for furniture placed at a given tile.
+   * If there's stackable furniture beneath, stack on top; otherwise ground level.
+   */
+  private static async calculateStackZ(
+    roomId: string,
+    positionX: number,
+    positionY: number,
+    excludeItemId?: string,
+  ): Promise<number> {
+    const existing = await prisma.furnitureItem.findMany({
+      where: {
+        roomId,
+        positionX,
+        positionY,
+        ...(excludeItemId && { id: { not: excludeItemId } }),
+      },
+      include: { definition: true },
+      orderBy: { positionZ: "desc" },
+    });
+
+    if (existing.length === 0) return 0;
+
+    const topItem = existing[0];
+    if (!topItem.definition.isStackable) {
+      throw new Error("Cannot stack on non-stackable furniture");
+    }
+
+    return topItem.positionZ + topItem.definition.stackHeight;
+  }
+
+  /**
+   * Check that a furniture piece does not overlap with existing non-walkable furniture.
+   * Throws if any occupied tile conflicts.
+   */
+  private static async checkOverlap(
+    roomId: string,
+    positionX: number,
+    positionY: number,
+    sizeW: number,
+    sizeH: number,
+    rotation: FurnitureRotation,
+    excludeItemId?: string,
+  ): Promise<void> {
+    const newTiles = getOccupiedTilesServer(positionX, positionY, sizeW, sizeH, rotation);
+
+    // Get all placed furniture in the room (with definitions for size info)
+    const roomItems = await prisma.furnitureItem.findMany({
+      where: {
+        roomId,
+        positionX: { not: null },
+        positionY: { not: null },
+        ...(excludeItemId && { id: { not: excludeItemId } }),
+      },
+      include: { definition: true },
+    });
+
+    for (const existing of roomItems) {
+      if (existing.definition.isWalkable) continue;
+      const existingTiles = getOccupiedTilesServer(
+        existing.positionX!,
+        existing.positionY!,
+        existing.definition.sizeW,
+        existing.definition.sizeH,
+        existing.rotation as FurnitureRotation,
+      );
+      for (const et of existingTiles) {
+        if (newTiles.some(nt => nt.x === et.x && nt.y === et.y)) {
+          throw new Error("Cannot place furniture: tile is occupied by another furniture");
+        }
+      }
+    }
+  }
+
   /** Get all items in a user's inventory (not placed in any room). */
   static async getUserInventory(userId: string): Promise<FurnitureItemModel[]> {
     const items = await prisma.furnitureItem.findMany({
@@ -36,6 +110,7 @@ export class InventoryService {
   static async placeFurniture(input: PlaceFurnitureInput): Promise<FurnitureItemModel> {
     const item = await prisma.furnitureItem.findUniqueOrThrow({
       where: { id: input.furnitureItemId },
+      include: { definition: true },
     });
 
     if (item.ownerId !== input.userId) {
@@ -58,7 +133,22 @@ export class InventoryService {
       throw new Error("You don't have permission to place furniture in this room");
     }
 
-    validatePosition(input.positionX, input.positionY, room.width, room.height);
+    const rotation = input.rotation ?? "se";
+    const { sizeW, sizeH } = item.definition;
+
+    // Validate ALL occupied tiles are within room bounds
+    validateMultiTilePosition(input.positionX, input.positionY, sizeW, sizeH, rotation, room.width, room.height);
+
+    // Check overlap with existing furniture (non-walkable)
+    await InventoryService.checkOverlap(
+      input.roomId, input.positionX, input.positionY, sizeW, sizeH, rotation,
+    );
+
+    const positionZ = await InventoryService.calculateStackZ(
+      input.roomId,
+      input.positionX,
+      input.positionY,
+    );
 
     const updated = await prisma.furnitureItem.update({
       where: { id: input.furnitureItemId },
@@ -67,7 +157,8 @@ export class InventoryService {
         placedByUserId: input.userId,
         positionX: input.positionX,
         positionY: input.positionY,
-        rotation: input.rotation ?? "se",
+        positionZ,
+        rotation,
         placedAt: new Date(),
       },
     });
@@ -203,6 +294,7 @@ export class InventoryService {
   ): Promise<FurnitureItemModel> {
     const item = await prisma.furnitureItem.findUniqueOrThrow({
       where: { id: furnitureItemId },
+      include: { definition: true },
     });
 
     if (item.roomId === null) {
@@ -222,13 +314,30 @@ export class InventoryService {
       throw new Error("You don't have permission to modify furniture in this room");
     }
 
-    validatePosition(positionX, positionY, room.width, room.height);
+    const finalRotation = rotation ?? (item.rotation as FurnitureRotation);
+    const { sizeW, sizeH } = item.definition;
+
+    // Validate ALL occupied tiles are within room bounds
+    validateMultiTilePosition(positionX, positionY, sizeW, sizeH, finalRotation, room.width, room.height);
+
+    // Check overlap with existing furniture (exclude self)
+    await InventoryService.checkOverlap(
+      item.roomId, positionX, positionY, sizeW, sizeH, finalRotation, furnitureItemId,
+    );
+
+    const positionZ = await InventoryService.calculateStackZ(
+      item.roomId,
+      positionX,
+      positionY,
+      furnitureItemId,
+    );
 
     const updated = await prisma.furnitureItem.update({
       where: { id: furnitureItemId },
       data: {
         positionX,
         positionY,
+        positionZ,
         ...(rotation !== undefined && { rotation }),
       },
     });

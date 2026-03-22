@@ -1,0 +1,103 @@
+Generate a pixel art spritesheet of a tropical chair, isometric 2:1 ratio, Habbo Hotel style.
+
+================================
+OUTPUT: ONE HORIZONTAL ROW OF 4 VIEWS
+================================
+
+Place exactly 4 chair views side by side in a single row.
+Label each one below: NE, NW, SW, SE
+
+================================
+HOW TO CREATE THE 4 VIEWS
+================================
+
+You only need to draw TWO unique views, then mirror each one:
+
+1. Draw a FRONT view (chair facing bottom-right, seat and cushion visible, backrest on the upper-left side)
+2. Draw a BACK view (chair facing bottom-right, backrest facing viewer, seat hidden behind)
+
+Then:
+- NE = front view (as drawn)
+- NW = front view flipped horizontally
+- SW = back view (as drawn)
+- SE = back view flipped horizontally
+
+All 4 must appear in a single horizontal row: [NE] [NW] [SW] [SE]
+
+================================
+FRONT VIEW (NE / SE)
+================================
+
+- The chair is seen from the front, seat and cushion fully visible
+- Backrest is behind the seat, visible above the cushion
+- Armrests visible on both sides (if present)
+- The chair sits on an isometric diamond (2:1 pixel ratio)
+
+================================
+BACK VIEW (NW / SW)
+================================
+
+- The chair is seen from behind
+- The wooden back panel of the backrest faces the viewer
+- Armrests stick out on both sides (if present)
+- Top edge of cushion peeks above the backrest
+- Legs visible underneath
+- Must look 3D with depth — NOT a flat rectangle
+
+================================
+DESIGN
+================================
+
+- Tropical resort style: bamboo/rattan frame, warm wood tones
+- Cream or beige cushion with visible seams
+- Low backrest
+- 1-seat width
+- Clean pixel edges, no anti-aliasing
+- NO shadows under the chair
+- NO background — transparent or white only
+
+================================
+RULES
+================================
+
+- NW is a horizontal mirror of NE
+- SE is a horizontal mirror of SW
+- Same pixel size for all 4
+- Same colors, same proportions
+- Strict 2:1 isometric pixel grid
+- No extra sprites, no extra text besides labels
+- No anti-aliasing
+- No blur
+
+================================
+BACKGROUND
+================================
+
+- Pure white (#FFFFFF)
+- No extra UI elements
+
+================================
+VALIDATION (MANDATORY)
+================================
+
+Before finishing:
+
+1. Is there ONLY ONE ROW? If not → fix
+2. Are there EXACTLY 4 sprites? If not → fix
+3. Is order NE → SE → SW → NW? If not → fix
+4. Does each sprite have a correct label underneath? If not → fix
+5. Are labels black and bold? If not → fix
+6. Are there any shadows? If yes → remove
+7. Are any sprites duplicated or mirrored? If yes → fix
+
+================================
+IMPORTANT
+================================
+
+This is NOT a creative task.
+
+This is a strict isometric rotation task with:
+- ONE ROW ONLY
+- EXACT directions: NE, SE, SW, NW
+- BOLD BLACK LABELS under each sprite
+- NO SHADOWS

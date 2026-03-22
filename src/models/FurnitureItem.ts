@@ -9,6 +9,7 @@ export class FurnitureItemModel {
     public readonly placedByUserId: string | null,
     public readonly positionX: number | null,
     public readonly positionY: number | null,
+    public readonly positionZ: number,
     public readonly rotation: FurnitureRotation,
     public readonly currentState: string,
     public readonly placedAt: Date | null,

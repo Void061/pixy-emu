@@ -27,6 +27,7 @@ export async function moveFurniture(
     if (furniState) {
       furniState.x = item.positionX!;
       furniState.y = item.positionY!;
+      furniState.z = item.positionZ;
       furniState.rotation = item.rotation;
     }
 

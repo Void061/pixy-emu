@@ -21,6 +21,8 @@ export class FurnitureConverter {
       p.interactionPoints as unknown as Partial<Record<FurnitureRotation, InteractionPointInfo>>,
       p.zHeight,
       p.spriteFormat,
+      p.isStackable,
+      p.stackHeight,
     );
   }
 
@@ -33,6 +35,7 @@ export class FurnitureConverter {
       p.placedByUserId,
       p.positionX,
       p.positionY,
+      p.positionZ,
       p.rotation as FurnitureRotation,
       p.currentState,
       p.placedAt,

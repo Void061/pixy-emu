@@ -27,6 +27,7 @@ export async function placeFurniture(
     furniState.ownerUsername = auth.username;
     furniState.x = item.positionX!;
     furniState.y = item.positionY!;
+    furniState.z = item.positionZ;
     furniState.rotation = item.rotation;
     furniState.currentState = item.currentState;
 

@@ -27,5 +27,7 @@ export class FurnitureDefinitionModel {
     public readonly interactionPoints: Partial<Record<FurnitureRotation, InteractionPointInfo>>,
     public readonly zHeight: number,
     public readonly spriteFormat: string,
+    public readonly isStackable: boolean,
+    public readonly stackHeight: number,
   ) {}
 }
